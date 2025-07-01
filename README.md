@@ -38,7 +38,7 @@
 
 1.  **克隆仓库**：
     ```bash
-    git clone <你的仓库地址>
+    git clone https://github.com/axfinn/my-tool-dashboard.git
     cd my-tool-dashboard
     ```
 2.  **安装依赖**：
