@@ -15,13 +15,24 @@
             </div>
         </div>
 
-        <div class="d-flex align-items-center mb-3">
-            <div class="form-check form-switch me-3">
-                <input class="form-check-input" type="checkbox" id="backgroundRotationSwitch" v-model="isBackgroundRotationEnabled" @change="toggleBackgroundRotation">
-                <label class="form-check-label" for="backgroundRotationSwitch">背景轮播</label>
+        <div class="controls-container" :class="{ 'expanded': isControlsExpanded }" @mouseenter="handleMouseEnterControls" @mouseleave="handleMouseLeaveControls">
+            <button class="toggle-controls-btn">
+                {{ isControlsExpanded ? '&#9660;' : '&#9658;' }} <!-- Down/Right arrow -->
+            </button>
+            <div ref="controlsContent" :style="controlsContentStyle">
+                <div class="d-flex align-items-center mb-2">
+                    <div class="form-check form-switch form-check-lg">
+                        <input class="form-check-input" type="checkbox" id="backgroundRotationSwitch" v-model="isBackgroundRotationEnabled" @change="toggleBackgroundRotation">
+                        <label class="form-check-label text-white" for="backgroundRotationSwitch">背景轮播</label>
+                    </div>
+                    <label for="backgroundBlurRange" class="form-label mb-0 me-2 text-white">背景模糊度:</label>
+                    <input type="range" class="form-range" id="backgroundBlurRange" min="0" max="10" step="0.1" v-model="backgroundBlur">
+                </div>
+                <div class="form-check form-switch form-check-lg">
+                    <input class="form-check-input" type="checkbox" id="pendulumSwitch" v-model="isPendulumVisible">
+                    <label class="form-check-label text-white" for="pendulumSwitch">显示小摆锤</label>
+                </div>
             </div>
-            <label for="backgroundBlurRange" class="form-label mb-0 me-2">背景模糊度:</label>
-            <input type="range" class="form-range" id="backgroundBlurRange" min="0" max="10" step="0.1" v-model="backgroundBlur">
         </div>
 
         <div v-for="category in filteredCategories" :key="category.name">
@@ -46,7 +57,7 @@
 
         <MusicPlayer />
         <PetCard />
-        <PendulumComponent />
+        <PendulumComponent :is-visible="isPendulumVisible" />
     </div>
 </template>
 
@@ -80,7 +91,36 @@ const backgroundImages = ref([
     'https://picsum.photos/1920/1080?random=3'
 ]);
 const currentBackgroundIndex = ref(0);
-const isBackgroundRotationEnabled = ref(true); // New ref for toggle
+const isBackgroundRotationEnabled = ref(true);
+const backgroundBlur = ref(0); // New ref for background blur
+const isPendulumVisible = ref(true); // New ref for pendulum visibility
+
+const controlsContent = ref(null);
+const isControlsExpanded = ref(false); // Default to collapsed
+let debounceTimeout = null;
+
+const handleMouseEnterControls = () => {
+    if (debounceTimeout) {
+        clearTimeout(debounceTimeout);
+        debounceTimeout = null;
+    }
+    isControlsExpanded.value = true;
+};
+
+const handleMouseLeaveControls = () => {
+    if (debounceTimeout) {
+        clearTimeout(debounceTimeout);
+    }
+    debounceTimeout = setTimeout(() => {
+        isControlsExpanded.value = false;
+    }, 300); // Debounce for 300ms
+};
+
+const controlsContentHeight = computed(() => {
+    // A sufficiently large fixed value for max-height when expanded
+    // This avoids layout thrashing from dynamic scrollHeight calculation during animation
+    return isControlsExpanded.value ? '200px' : '0px'; 
+});
 
 const defaultData = [
     {
@@ -120,12 +160,18 @@ const uniqueCategoryNames = computed(() => {
     return Array.from(names);
 });
 
-const backgroundBlur = ref(0); // New ref for background blur
-
 const backgroundStyle = computed(() => {
     return {
         backgroundImage: `url(${backgroundImages.value[currentBackgroundIndex.value]})`,
         filter: `blur(${backgroundBlur.value}px)`,
+    };
+});
+
+const controlsContentStyle = computed(() => {
+    return {
+        maxHeight: isControlsExpanded.value ? controlsContentHeight.value : '0',
+        overflow: 'hidden',
+        transition: 'max-height 0.4s cubic-bezier(0.25, 0.8, 0.25, 1)'
     };
 });
 
@@ -285,6 +331,82 @@ body {
     background-repeat: no-repeat;
     transition: background-image 1s ease-in-out;
     z-index: -1; /* Send to back */
+}
+
+.controls-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: rgba(0, 0, 0, 0.6);
+    border-radius: 12px;
+    z-index: 1000;
+    transition: max-width 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), max-height 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), padding 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    max-width: 48px; /* Collapsed width */
+    max-height: 48px; /* Collapsed height */
+    padding: 8px;
+}
+
+.controls-container.expanded {
+    max-width: 280px; /* Expanded width */
+    max-height: 200px; /* Fixed max-height for content */
+    padding: 15px;
+}
+
+.controls-container .form-check-label {
+    color: white;
+    font-size: 0.95rem;
+}
+
+.toggle-controls-btn {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.4rem;
+    cursor: pointer;
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    z-index: 1001;
+    transition: transform 0.3s ease;
+}
+
+.controls-container.expanded .toggle-controls-btn {
+    transform: rotate(180deg);
+}
+
+/* Custom switch styling */
+.form-check-lg .form-check-input {
+    width: 2.5em;
+    height: 1.3em;
+    margin-top: 0.15em;
+    background-color: #6c757d;
+    border-color: #6c757d;
+    transition: background-color 0.3s ease, border-color 0.3s ease; /* Smooth transition for color */
+}
+
+.form-check-lg .form-check-input:checked {
+    background-color: #28a745;
+    border-color: #28a745;
+}
+
+.form-check-lg .form-check-input:focus {
+    box-shadow: 0 0 0 0.25rem rgba(40, 167, 69, 0.25);
+}
+
+.form-range::-webkit-slider-thumb {
+    background-color: #007bff;
+}
+
+.form-range::-moz-range-thumb {
+    background-color: #007bff;
+}
+
+.form-range::-ms-thumb {
+    background-color: #007bff;
 }
 
 /* App-level styles or overrides */

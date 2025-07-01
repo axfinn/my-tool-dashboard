@@ -1,15 +1,17 @@
 <template>
     <div class="music-player" 
-        :style="{ left: playerX + 'px', top: playerY + 'px' }"
-        @mousedown="startDrag">
+        :style="{ transform: `translate(${playerX}px, ${playerY}px)` }"
+        @mousedown="startDrag"
+        @mouseenter="showVolume = true"
+        @mouseleave="showVolume = false">
         <audio id="background-music" loop>
             <source src="/audio/background_music.mp3" type="audio/mpeg"> <!-- 请替换为您的音乐文件路径 -->
             您的浏览器不支持音频播放。
         </audio>
-        <button class="btn btn-sm btn-primary" @click="toggleMusic">
-            {{ isPlaying ? '暂停音乐' : '播放音乐' }}
+        <button class="play-pause-btn" @click="toggleMusic">
+            {{ isPlaying ? '&#10074;&#10074;' : '&#9658;' }} <!-- Play/Pause icons -->
         </button>
-        <input type="range" min="0" max="1" step="0.01" v-model="volume" @input="setVolume">
+        <input type="range" min="0" max="1" step="0.01" v-model="volume" @input="setVolume" v-if="showVolume">
     </div>
 </template>
 
@@ -20,23 +22,45 @@ const isPlaying = ref(false);
 const volume = ref(0.5);
 let audioPlayer = null;
 
-const playerX = ref(20); // Initial X position
-const playerY = ref(20); // Initial Y position
+const playerX = ref(0); // Initial X offset for transform
+const playerY = ref(0); // Initial Y offset for transform
 const isDragging = ref(false);
-let offsetX = 0;
-let offsetY = 0;
+let startMouseX = 0;
+let startMouseY = 0;
+let startPlayerX = 0;
+let startPlayerY = 0;
+
+const showVolume = ref(false);
+
+let animationFrameId = null;
+
+const throttledDrag = (e) => {
+    if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+    }
+    animationFrameId = requestAnimationFrame(() => {
+        if (!isDragging.value) return;
+        const dx = e.clientX - startMouseX;
+        const dy = e.clientY - startMouseY;
+        playerX.value = startPlayerX + dx;
+        playerY.value = startPlayerY + dy;
+    });
+};
 
 onMounted(() => {
     audioPlayer = document.getElementById('background-music');
     audioPlayer.volume = volume.value;
 
-    document.addEventListener('mousemove', drag);
+    document.addEventListener('mousemove', throttledDrag);
     document.addEventListener('mouseup', stopDrag);
 });
 
 onUnmounted(() => {
-    document.removeEventListener('mousemove', drag);
+    document.removeEventListener('mousemove', throttledDrag);
     document.removeEventListener('mouseup', stopDrag);
+    if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+    }
 });
 
 const toggleMusic = () => {
@@ -57,15 +81,11 @@ const setVolume = () => {
 
 const startDrag = (e) => {
     isDragging.value = true;
-    offsetX = e.clientX - playerX.value;
-    offsetY = e.clientY - playerY.value;
+    startMouseX = e.clientX;
+    startMouseY = e.clientY;
+    startPlayerX = playerX.value;
+    startPlayerY = playerY.value;
     e.preventDefault(); // Prevent default drag behavior
-};
-
-const drag = (e) => {
-    if (!isDragging.value) return;
-    playerX.value = e.clientX - offsetX;
-    playerY.value = e.clientY - offsetY;
 };
 
 const stopDrag = () => {
@@ -77,28 +97,56 @@ const stopDrag = () => {
 /* Music player specific styles */
 .music-player {
     position: fixed;
+    bottom: 20px;
+    right: 20px; /* Position in bottom right */
     background: rgba(255, 255, 255, 0.8);
     backdrop-filter: blur(5px);
-    padding: 5px 10px; /* Smaller padding */
     border-radius: 10px;
     box-shadow: 0 5px 15px rgba(0,0,0,0.1);
     display: flex;
     align-items: center;
-    gap: 5px; /* Smaller gap */
+    padding: 3px; /* Minimal padding */
+    gap: 0; /* No gap by default */
     z-index: 1000;
     cursor: grab; /* Indicate draggable */
+    transition: all 0.3s ease; /* Smooth transition for all properties */
+    overflow: hidden; /* Hide overflow content */
+    width: 36px; /* Default width for just the button */
 }
 
 .music-player:active {
     cursor: grabbing;
 }
 
-.music-player .btn {
-    padding: 5px 10px; /* Smaller button */
-    font-size: 0.8rem;
+.music-player:hover {
+    width: 100px; /* Expanded width to show slider */
+    padding: 3px 8px; /* Slightly more padding on hover */
+    gap: 3px; /* Add gap on hover */
+}
+
+.music-player .play-pause-btn {
+    width: 30px; /* Fixed width for circular button */
+    height: 30px; /* Fixed height for circular button */
+    border-radius: 50%; /* Make it circular */
+    background-color: #007bff; /* Blue background */
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border: none;
+    cursor: pointer;
+    flex-shrink: 0;
+    font-size: 0.8rem; /* Adjust font size for icons */
+    line-height: 1; /* Ensure icon is centered vertically */
+}
+
+.music-player .play-pause-btn:hover {
+    background-color: #0056b3; /* Darker blue on hover */
 }
 
 .music-player input[type="range"] {
-    width: 80px; /* Smaller slider */
+    width: 60px; /* Slider width when visible */
+    flex-grow: 1; /* Allow slider to take available space */
+    margin-left: 5px; /* Space between button and slider */
 }
 </style>
