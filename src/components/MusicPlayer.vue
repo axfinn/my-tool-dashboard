@@ -1,6 +1,7 @@
 <template>
     <div class="music-player" 
-        :style="{ transform: `translate(${playerX}px, ${playerY}px)` }"
+        v-if="isVisible"
+        :style="{ transform: `translate(${playerX}px, ${playerY}px)`, cursor: isMovable ? 'grab' : 'default' }"
         @mousedown="startDrag"
         @mouseenter="showVolume = true"
         @mouseleave="showVolume = false">
@@ -16,7 +17,14 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted, defineProps } from 'vue';
+
+const STORAGE_KEY_MUSIC_PLAYER_POSITION = 'music-player-position';
+
+const props = defineProps({
+    isVisible: { type: Boolean, default: true },
+    isMovable: { type: Boolean, default: true }
+});
 
 const isPlaying = ref(false);
 const volume = ref(0.5);
@@ -51,6 +59,12 @@ onMounted(() => {
     audioPlayer = document.getElementById('background-music');
     audioPlayer.volume = volume.value;
 
+    const savedPosition = JSON.parse(localStorage.getItem(STORAGE_KEY_MUSIC_PLAYER_POSITION));
+    if (savedPosition) {
+        playerX.value = savedPosition.x;
+        playerY.value = savedPosition.y;
+    }
+
     document.addEventListener('mousemove', throttledDrag);
     document.addEventListener('mouseup', stopDrag);
 });
@@ -80,6 +94,7 @@ const setVolume = () => {
 };
 
 const startDrag = (e) => {
+    if (!props.isMovable) return;
     isDragging.value = true;
     startMouseX = e.clientX;
     startMouseY = e.clientY;
@@ -90,6 +105,7 @@ const startDrag = (e) => {
 
 const stopDrag = () => {
     isDragging.value = false;
+    localStorage.setItem(STORAGE_KEY_MUSIC_PLAYER_POSITION, JSON.stringify({ x: playerX.value, y: playerY.value }));
 };
 </script>
 

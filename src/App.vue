@@ -20,19 +20,49 @@
                 {{ isControlsExpanded ? '&#9660;' : '&#9658;' }} <!-- Down/Right arrow -->
             </button>
             <div ref="controlsContent" :style="controlsContentStyle">
-                <div class="d-flex align-items-center mb-2">
-                    <div class="form-check form-switch form-check-lg">
-                        <input class="form-check-input" type="checkbox" id="backgroundRotationSwitch" v-model="isBackgroundRotationEnabled" @change="toggleBackgroundRotation">
-                        <label class="form-check-label text-white" for="backgroundRotationSwitch">背景轮播</label>
-                    </div>
-                    <label for="backgroundBlurRange" class="form-label mb-0 me-2 text-white">背景模糊度:</label>
-                    <input type="range" class="form-range" id="backgroundBlurRange" min="0" max="10" step="0.1" v-model="backgroundBlur">
-                </div>
-                <div class="form-check form-switch form-check-lg">
-                    <input class="form-check-input" type="checkbox" id="pendulumSwitch" v-model="isPendulumVisible">
-                    <label class="form-check-label text-white" for="pendulumSwitch">显示小摆锤</label>
-                </div>
-            </div>
+    <div class="d-flex flex-column">
+        <div class="form-check form-switch form-check-lg mb-2">
+            <input class="form-check-input" type="checkbox" id="backgroundRotationSwitch" v-model="isBackgroundRotationEnabled" @change="toggleBackgroundRotation">
+            <label class="form-check-label text-white" for="backgroundRotationSwitch">背景轮播</label>
+        </div>
+        <div class="mb-2">
+            <label for="backgroundBlurRange" class="form-label mb-0 me-2 text-white">背景模糊度:</label>
+            <input type="range" class="form-range" id="backgroundBlurRange" min="0" max="10" step="0.1" v-model="backgroundBlur">
+        </div>
+        <div class="form-check form-switch form-check-lg mb-2">
+            <input class="form-check-input" type="checkbox" id="pendulumVisibleSwitch" v-model="isPendulumVisible">
+            <label class="form-check-label text-white" for="pendulumVisibleSwitch">显示小摆锤</label>
+        </div>
+        <div class="form-check form-switch form-check-lg mb-2">
+            <input class="form-check-input" type="checkbox" id="pendulumMovableSwitch" v-model="isPendulumMovable">
+            <label class="form-check-label text-white" for="pendulumMovableSwitch">小摆锤可移动</label>
+        </div>
+        <div class="form-check form-switch form-check-lg mb-2">
+            <input class="form-check-input" type="checkbox" id="musicPlayerVisibleSwitch" v-model="isMusicPlayerVisible">
+            <label class="form-check-label text-white" for="musicPlayerVisibleSwitch">显示音乐播放器</label>
+        </div>
+        <div class="form-check form-switch form-check-lg mb-2">
+            <input class="form-check-input" type="checkbox" id="musicPlayerMovableSwitch" v-model="isMusicPlayerMovable">
+            <label class="form-check-label text-white" for="musicPlayerMovableSwitch">音乐播放器可移动</label>
+        </div>
+        <div class="form-check form-switch form-check-lg mb-2">
+            <input class="form-check-input" type="checkbox" id="petCardVisibleSwitch" v-model="isPetCardVisible">
+            <label class="form-check-label text-white" for="petCardVisibleSwitch">显示宠物</label>
+        </div>
+        <div class="form-check form-switch form-check-lg mb-2">
+            <input class="form-check-input" type="checkbox" id="petCardMovableSwitch" v-model="isPetCardMovable">
+            <label class="form-check-label text-white" for="petCardMovableSwitch">宠物可移动</label>
+        </div>
+        <div class="form-check form-switch form-check-lg mb-2">
+            <input class="form-check-input" type="checkbox" id="timeWidgetVisibleSwitch" v-model="isTimeWidgetVisible">
+            <label class="form-check-label text-white" for="timeWidgetVisibleSwitch">显示时间摆件</label>
+        </div>
+        <div class="form-check form-switch form-check-lg mb-2">
+            <input class="form-check-input" type="checkbox" id="timeWidgetMovableSwitch" v-model="isTimeWidgetMovable">
+            <label class="form-check-label text-white" for="timeWidgetMovableSwitch">时间摆件可移动</label>
+        </div>
+    </div>
+</div>
         </div>
 
         <div v-for="category in filteredCategories" :key="category.name">
@@ -49,29 +79,33 @@
         </div>
 
         <ToolModal
+            ref="toolModalRef"
             :tool="currentTool"
             :isEditMode="isEditMode"
             :uniqueCategoryNames="uniqueCategoryNames"
             @save="saveTool"
+            @close="toolModalRef.hide()"
         />
 
-        <MusicPlayer />
-        <PetCard />
-        <PendulumComponent :is-visible="isPendulumVisible" />
+        <MusicPlayer :is-visible="isMusicPlayerVisible" :is-movable="isMusicPlayerMovable" />
+        <PetCard :is-visible="isPetCardVisible" :is-movable="isPetCardMovable" />
+        <PendulumComponent :is-visible="isPendulumVisible" :is-movable="isPendulumMovable" />
+        <TimeWidget :is-visible="isTimeWidgetVisible" :is-movable="isTimeWidgetMovable" />
     </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue';
-import { Modal } from 'bootstrap';
+import { ref, computed, onMounted, watch } from 'vue';
 import ToolCard from './components/ToolCard.vue';
 import ToolModal from './components/ToolModal.vue';
 import MusicPlayer from './components/MusicPlayer.vue';
 import PetCard from './components/PetCard.vue';
 import PendulumComponent from './components/PendulumComponent.vue';
+import TimeWidget from './components/TimeWidget.vue';
 
-const STORAGE_KEY = 'my-tools-dashboard-vue';
-let toolModalInstance = null;
+const STORAGE_KEY_TOOLS = 'my-tools-dashboard-vue-tools';
+const STORAGE_KEY_PREFERENCES = 'my-tools-dashboard-vue-preferences';
+let toolModalRef = ref(null);
 let backgroundInterval = null;
 
 const categories = ref([]);
@@ -94,6 +128,13 @@ const currentBackgroundIndex = ref(0);
 const isBackgroundRotationEnabled = ref(true);
 const backgroundBlur = ref(0); // New ref for background blur
 const isPendulumVisible = ref(true); // New ref for pendulum visibility
+const isPendulumMovable = ref(true);
+const isMusicPlayerVisible = ref(true);
+const isMusicPlayerMovable = ref(true);
+const isPetCardVisible = ref(true);
+const isPetCardMovable = ref(true);
+const isTimeWidgetVisible = ref(true);
+const isTimeWidgetMovable = ref(true);
 
 const controlsContent = ref(null);
 const isControlsExpanded = ref(false); // Default to collapsed
@@ -119,7 +160,7 @@ const handleMouseLeaveControls = () => {
 const controlsContentHeight = computed(() => {
     // A sufficiently large fixed value for max-height when expanded
     // This avoids layout thrashing from dynamic scrollHeight calculation during animation
-    return isControlsExpanded.value ? '200px' : '0px'; 
+    return isControlsExpanded.value ? '450px' : '0px'; 
 });
 
 const defaultData = [
@@ -177,7 +218,7 @@ const controlsContentStyle = computed(() => {
 
 // Methods
 function loadData() {
-    const data = localStorage.getItem(STORAGE_KEY);
+    const data = localStorage.getItem(STORAGE_KEY_TOOLS);
     if (data) {
         categories.value = JSON.parse(data);
     } else {
@@ -187,7 +228,37 @@ function loadData() {
 }
 
 function saveData() {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(categories.value));
+    localStorage.setItem(STORAGE_KEY_TOOLS, JSON.stringify(categories.value));
+}
+
+function loadUserPreferences() {
+    const preferences = JSON.parse(localStorage.getItem(STORAGE_KEY_PREFERENCES) || '{}');
+    isBackgroundRotationEnabled.value = preferences.isBackgroundRotationEnabled !== undefined ? preferences.isBackgroundRotationEnabled : true;
+    backgroundBlur.value = preferences.backgroundBlur !== undefined ? preferences.backgroundBlur : 0;
+    isPendulumVisible.value = preferences.isPendulumVisible !== undefined ? preferences.isPendulumVisible : true;
+    isPendulumMovable.value = preferences.isPendulumMovable !== undefined ? preferences.isPendulumMovable : true;
+    isMusicPlayerVisible.value = preferences.isMusicPlayerVisible !== undefined ? preferences.isMusicPlayerVisible : true;
+    isMusicPlayerMovable.value = preferences.isMusicPlayerMovable !== undefined ? preferences.isMusicPlayerMovable : true;
+    isPetCardVisible.value = preferences.isPetCardVisible !== undefined ? preferences.isPetCardVisible : true;
+    isPetCardMovable.value = preferences.isPetCardMovable !== undefined ? preferences.isPetCardMovable : true;
+    isTimeWidgetVisible.value = preferences.isTimeWidgetVisible !== undefined ? preferences.isTimeWidgetVisible : true;
+    isTimeWidgetMovable.value = preferences.isTimeWidgetMovable !== undefined ? preferences.isTimeWidgetMovable : true;
+}
+
+function saveUserPreferences() {
+    const preferences = {
+        isBackgroundRotationEnabled: isBackgroundRotationEnabled.value,
+        backgroundBlur: backgroundBlur.value,
+        isPendulumVisible: isPendulumVisible.value,
+        isPendulumMovable: isPendulumMovable.value,
+        isMusicPlayerVisible: isMusicPlayerVisible.value,
+        isMusicPlayerMovable: isMusicPlayerMovable.value,
+        isPetCardVisible: isPetCardVisible.value,
+        isPetCardMovable: isPetCardMovable.value,
+        isTimeWidgetVisible: isTimeWidgetVisible.value,
+        isTimeWidgetMovable: isTimeWidgetMovable.value,
+    };
+    localStorage.setItem(STORAGE_KEY_PREFERENCES, JSON.stringify(preferences));
 }
 
 function generateId() {
@@ -205,6 +276,13 @@ function findToolById(id) {
 }
 
 function openToolModal(tool = null, categoryName = '') {
+    console.log('App.vue: openToolModal called with tool:', tool, 'categoryName:', categoryName);
+    if (toolModalRef.value) {
+        toolModalRef.value.show();
+        console.log('App.vue: toolModalRef.value.show() called.');
+    } else {
+        console.error('App.vue: toolModalRef is not initialized!');
+    }
     if (tool) {
         isEditMode.value = true;
         currentTool.value = {
@@ -224,12 +302,13 @@ function openToolModal(tool = null, categoryName = '') {
             description: ''
         };
     }
-    toolModalInstance.show();
 }
 
 function saveTool(toolData) {
+    console.log('App.vue: saveTool called with toolData:', toolData);
     if (toolData.id) { // Editing existing tool
         const { tool: oldTool, category: oldCategory } = findToolById(toolData.id);
+        console.log('App.vue: Editing existing tool. oldTool:', oldTool, 'oldCategory:', oldCategory);
         if (oldTool) {
             oldTool.name = toolData.name;
             oldTool.url = toolData.url;
@@ -251,6 +330,7 @@ function saveTool(toolData) {
             }
         }
     } else { // Adding new tool
+        console.log('App.vue: Adding new tool.');
         const newTool = { id: generateId(), ...toolData };
         let category = categories.value.find(c => c.name === toolData.category);
         if (category) {
@@ -260,7 +340,12 @@ function saveTool(toolData) {
         }
     }
     saveData();
-    toolModalInstance.hide();
+    if (toolModalRef.value) {
+        toolModalRef.value.hide();
+        console.log('App.vue: toolModalRef.value.hide() called.');
+    } else {
+        console.error('App.vue: toolModalRef is not initialized!');
+    }
 }
 
 function deleteTool(id) {
@@ -299,12 +384,17 @@ function toggleBackgroundRotation() {
 // Lifecycle Hook
 onMounted(() => {
     loadData();
-    toolModalInstance = new Modal(document.getElementById('toolModal'));
+    loadUserPreferences();
     startBackgroundRotation(); // Start rotation by default
+
+    console.log('isMusicPlayerMovable:', isMusicPlayerMovable.value);
+    console.log('isPetCardMovable:', isPetCardMovable.value);
+    console.log('isPendulumMovable:', isPendulumMovable.value);
+    console.log('isTimeWidgetMovable:', isTimeWidgetMovable.value);
 });
 
-onUnmounted(() => {
-    stopBackgroundRotation();
+watch([isBackgroundRotationEnabled, backgroundBlur, isPendulumVisible, isPendulumMovable, isMusicPlayerVisible, isMusicPlayerMovable, isPetCardVisible, isPetCardMovable, isTimeWidgetVisible, isTimeWidgetMovable], () => {
+    saveUserPreferences();
 });
 </script>
 
@@ -317,7 +407,6 @@ body {
 #app {
     position: relative;
     min-height: 100vh;
-    z-index: 1;
 }
 
 .background-container {
@@ -352,7 +441,7 @@ body {
 
 .controls-container.expanded {
     max-width: 280px; /* Expanded width */
-    max-height: 200px; /* Fixed max-height for content */
+    max-height: 250px; /* Adjusted max-height for content */
     padding: 15px;
 }
 

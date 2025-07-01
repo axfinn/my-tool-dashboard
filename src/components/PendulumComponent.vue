@@ -1,5 +1,6 @@
 <template>
     <div v-if="props.isVisible" class="pendulum-container"
+        :class="{ 'movable': props.isMovable }"
         :style="{ left: pendulumX + 'px', top: pendulumY + 'px' }"
         @mousedown="startDrag">
         <svg :width="width" :height="height">
@@ -15,8 +16,11 @@
 import { ref, onMounted, onUnmounted, defineProps } from 'vue';
 
 const props = defineProps({
-    isVisible: Boolean
+    isVisible: Boolean,
+    isMovable: { type: Boolean, default: true }
 });
+
+const STORAGE_KEY_PENDULUM_POSITION = 'pendulum-position';
 
 const width = 100;
 const height = 150;
@@ -58,6 +62,11 @@ const throttledDrag = (e) => {
 
 onMounted(() => {
     animationFrameId = requestAnimationFrame(animatePendulum);
+    const savedPosition = JSON.parse(localStorage.getItem(STORAGE_KEY_PENDULUM_POSITION));
+    if (savedPosition) {
+        pendulumX.value = savedPosition.x;
+        pendulumY.value = savedPosition.y;
+    }
     document.addEventListener('mousemove', throttledDrag);
     document.addEventListener('mouseup', stopDrag);
 });
@@ -74,6 +83,7 @@ onUnmounted(() => {
 });
 
 const startDrag = (e) => {
+    if (!props.isMovable) return;
     isDragging.value = true;
     offsetX = e.clientX - pendulumX.value;
     offsetY = e.clientY - pendulumY.value;
@@ -82,19 +92,21 @@ const startDrag = (e) => {
 
 const stopDrag = () => {
     isDragging.value = false;
+    localStorage.setItem(STORAGE_KEY_PENDULUM_POSITION, JSON.stringify({ x: pendulumX.value, y: pendulumY.value }));
 };
 </script>
 
 <style scoped>
 .pendulum-container {
     position: fixed;
-    /* bottom: 20px; */
-    /* left: 20px; */
     z-index: 999;
+}
+
+.pendulum-container.movable {
     cursor: grab;
 }
 
-.pendulum-container:active {
+.pendulum-container.movable:active {
     cursor: grabbing;
 }
 </style>

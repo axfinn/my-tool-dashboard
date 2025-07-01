@@ -1,17 +1,38 @@
 <template>
-    <div class="pet-container" @mouseover="handleMouseOver" @mouseleave="handleMouseLeave">
+    <div class="pet-container" 
+        v-if="isVisible"
+        :style="{ transform: `translate(${petX}px, ${petY}px)`, cursor: isMovable ? 'grab' : 'default' }"
+        @mousedown="startDrag"
+        @mouseover="handleMouseOver" @mouseleave="handleMouseLeave">
         <img src="../assets/pet.svg" alt="可爱的小宠物" :class="{ 'wagging': isWagging }">
         <div v-if="showMessage" class="pet-message">{{ currentMessage }}</div>
     </div>
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted, onUnmounted, defineProps } from 'vue';
+
+const STORAGE_KEY_PET_CARD_POSITION = 'pet-card-position';
 
 const isWagging = ref(false);
 const showMessage = ref(false);
 const currentMessage = ref('');
 let messageTimeout = null;
+
+const petX = ref(0); // Initial X offset for transform
+const petY = ref(0); // Initial Y offset for transform
+const isDragging = ref(false);
+let startMouseX = 0;
+let startMouseY = 0;
+let startPetX = 0;
+let startPetY = 0;
+
+let animationFrameId = null;
+
+const props = defineProps({
+    isVisible: { type: Boolean, default: true },
+    isMovable: { type: Boolean, default: true }
+});
 
 const messages = [
     '喵呜~ 你好呀！',
@@ -25,6 +46,52 @@ const messages = [
     '今天天气真好，适合睡觉。',
     '嘿，别走开，再陪我玩一会儿嘛！'
 ];
+
+const throttledDrag = (e) => {
+    if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+    }
+    animationFrameId = requestAnimationFrame(() => {
+        if (!isDragging.value) return;
+        const dx = e.clientX - startMouseX;
+        const dy = e.clientY - startMouseY;
+        petX.value = startPetX + dx;
+        petY.value = startPetY + dy;
+    });
+};
+
+onMounted(() => {
+    const savedPosition = JSON.parse(localStorage.getItem(STORAGE_KEY_PET_CARD_POSITION));
+    if (savedPosition) {
+        petX.value = savedPosition.x;
+        petY.value = savedPosition.y;
+    }
+    document.addEventListener('mousemove', throttledDrag);
+    document.addEventListener('mouseup', stopDrag);
+});
+
+onUnmounted(() => {
+    document.removeEventListener('mousemove', throttledDrag);
+    document.removeEventListener('mouseup', stopDrag);
+    if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+    }
+});
+
+const startDrag = (e) => {
+    if (!props.isMovable) return;
+    isDragging.value = true;
+    startMouseX = e.clientX;
+    startMouseY = e.clientY;
+    startPetX = petX.value;
+    startPetY = petY.value;
+    e.preventDefault(); // Prevent default drag behavior
+};
+
+const stopDrag = () => {
+    isDragging.value = false;
+    localStorage.setItem(STORAGE_KEY_PET_CARD_POSITION, JSON.stringify({ x: petX.value, y: petY.value }));
+};
 
 const handleMouseOver = () => {
     isWagging.value = true;

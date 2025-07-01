@@ -1,5 +1,14 @@
 # Changelog
 
+## 2025年7月2日
+
+### Added
+- 新增本地存储用户配置能力。
+- 添加了 Dockerfile，用于自动化部署。
+
+### Changed
+- 将右上角的控制控件开关改成一行一个，优化布局。
+
 ## 2025年7月1日
 
 ### Added
@@ -25,4 +34,4 @@
 ### Fixed
 - 修复宠物对话超出浏览器边界的问题。
 - 修复 `PendulumComponent.vue` 中 `props` 变量未使用的 ESLint 错误。
-- 修复 `App.vue` 中 `controlsContent` 变量重复声明的错误。
+- 修复 `App.vue` 中 `controlsContent` 变量重复声明的错误.

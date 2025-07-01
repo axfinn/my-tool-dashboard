@@ -33,7 +33,7 @@
                             <input type="password" class="form-control" id="admin-password" v-model="adminPassword" required placeholder="请输入管理员密码">
                         </div>
                         <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" @click="emits('close')">关闭</button>
                             <button type="submit" class="btn btn-primary">保存</button>
                         </div>
                     </form>
@@ -44,7 +44,8 @@
 </template>
 
 <script setup>
-import { ref, watch, defineProps, defineEmits } from 'vue';
+import { ref, watch, defineProps, defineEmits, onMounted, onUnmounted, defineExpose } from 'vue';
+import { Modal } from 'bootstrap';
 
 const props = defineProps({
     tool: Object,
@@ -52,28 +53,57 @@ const props = defineProps({
     uniqueCategoryNames: Array
 });
 
-const emits = defineEmits(['save']);
+const emits = defineEmits(['save', 'close']);
 
 const localTool = ref({});
 const adminPassword = ref('');
 const correctPassword = 'admin123'; // 示例密码，实际应用中应更安全地处理
+let modalInstance = null; // Internal modal instance
+
+onMounted(() => {
+    const modalElement = document.getElementById('toolModal');
+    console.log('ToolModal: onMounted - modalElement found:', modalElement);
+    if (modalElement) {
+        modalInstance = new Modal(modalElement);
+        console.log('ToolModal: onMounted - modalInstance initialized:', modalInstance);
+    }
+});
+
+onUnmounted(() => {
+    if (modalInstance) {
+        modalInstance.dispose();
+        modalInstance = null;
+    }
+});
 
 watch(() => props.tool, (newVal) => {
+    console.log('ToolModal: props.tool changed to:', newVal);
     localTool.value = newVal ? { ...newVal } : { id: null, name: '', url: '', category: '', description: '' };
     adminPassword.value = ''; // Reset password field on modal open
 }, { immediate: true });
 
 const submitForm = () => {
+    console.log('ToolModal: submitForm called. adminPassword:', adminPassword.value, 'localTool:', localTool.value);
     if (adminPassword.value === correctPassword) {
         emits('save', localTool.value);
-        // Optionally close modal here if save is successful and modal should close
-        // const modalElement = document.getElementById('toolModal');
-        // const modal = bootstrap.Modal.getInstance(modalElement);
-        // if (modal) modal.hide();
+        emits('close'); // Emit close event on successful save
     } else {
         alert('管理员密码不正确！');
     }
 };
+
+// Expose show and hide methods to parent component
+const show = () => {
+    console.log('ToolModal: show() called. modalInstance:', modalInstance);
+    if (modalInstance) modalInstance.show();
+};
+
+const hide = () => {
+    console.log('ToolModal: hide() called. modalInstance:', modalInstance);
+    if (modalInstance) modalInstance.hide();
+};
+
+defineExpose({ show, hide });
 </script>
 
 <style scoped>
