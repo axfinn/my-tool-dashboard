@@ -1,6 +1,12 @@
 <template>
     <div class="background-container" :style="backgroundStyle"></div>
     <div class="container py-5">
+        <div class="github-link-container">
+            <a href="https://github.com/your-username/your-repo" target="_blank" class="github-link">
+                <iframe src="https://ghbtns.com/github-btn.html?user=axfinn&repo=my-tool-dashboard&type=star&count=true&size=large" frameborder="0" scrolling="0" width="170" height="30" title="GitHub"></iframe>
+                <iframe src="https://ghbtns.com/github-btn.html?user=axfinn&type=follow&count=true&size=large" frameborder="0" scrolling="0" width="170" height="30" title="GitHub"></iframe>
+            </a>
+        </div>
         <div class="text-center mb-4">
             <h1>我的工具导航</h1>
             <p class="lead">一个集中管理常用工具的导航页</p>
@@ -81,8 +87,7 @@
             ref="musicConfigModalRef"
             :musicUrls="musicUrls"
             @save="(newUrls) => { musicUrls = newUrls; saveUserPreferences(); }"
-            @close="musicConfigModalRef.hide()"
-        />
+        ></MusicConfigModal>
     </div>
 </div>
         </div>
@@ -137,7 +142,7 @@ import MusicConfigModal from './components/MusicConfigModal.vue';
 const STORAGE_KEY_TOOLS = 'my-tools-dashboard-vue-tools';
 const STORAGE_KEY_PREFERENCES = 'my-tools-dashboard-vue-preferences';
 let toolModalRef = ref(null);
-let musicConfigModalRef = ref(null); // New ref for music config modal
+let musicConfigModalRef = ref(null);
 let backgroundInterval = null;
 
 const categories = ref([]);
@@ -167,16 +172,16 @@ const isPetCardVisible = ref(true);
 const isPetCardMovable = ref(true);
 const isTimeWidgetVisible = ref(true);
 const isTimeWidgetMovable = ref(true);
-const icpNumber = ref('');
+const icpNumber = ref('京ICP备xxxxxxxx号');
 const icpVisible = ref(true);
 const isControlsExpanded = ref(false);
 const isAdminMode = ref(false); // New ref for admin mode
 const ADMIN_PASSWORD = 'admin'; // Hardcoded admin password - FOR DEMO ONLY, NOT SECURE
 
 const musicUrls = ref([
-    'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
-    'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3',
-    'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3'
+    'https://www.bensound.com/bensound-music/bensound-ukulele.mp3',
+    'https://www.bensound.com/bensound-music/bensound-sunny.mp3',
+    'https://www.bensound.com/bensound-music/bensound-creativeminds.mp3'
 ]);
 
 const defaultData = [
@@ -273,14 +278,14 @@ function loadUserPreferences() {
     isPetCardMovable.value = preferences.isPetCardMovable !== undefined ? preferences.isPetCardMovable : true;
     isTimeWidgetVisible.value = preferences.isTimeWidgetVisible !== undefined ? preferences.isTimeWidgetVisible : true;
     isTimeWidgetMovable.value = preferences.isTimeWidgetMovable !== undefined ? preferences.isTimeWidgetMovable : true;
-icpNumber.value = preferences.icpNumber !== undefined ? preferences.icpNumber : '';
-icpVisible.value = preferences.icpVisible !== undefined ? preferences.icpVisible : true;
-isAdminMode.value = preferences.isAdminMode !== undefined ? preferences.isAdminMode : false;
-musicUrls.value = preferences.musicUrls !== undefined ? preferences.musicUrls : [
-    'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
-    'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3',
-    'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3'
-];
+    icpNumber.value = preferences.icpNumber !== undefined ? preferences.icpNumber : '京ICP备xxxxxxxx号';
+    icpVisible.value = preferences.icpVisible !== undefined ? preferences.icpVisible : true;
+    isAdminMode.value = preferences.isAdminMode !== undefined ? preferences.isAdminMode : false;
+    musicUrls.value = preferences.musicUrls !== undefined ? preferences.musicUrls : [
+        'https://www.bensound.com/bensound-music/bensound-ukulele.mp3',
+        'https://www.bensound.com/bensound-music/bensound-sunny.mp3',
+        'https://www.bensound.com/bensound-music/bensound-creativeminds.mp3'
+    ];
 }
 
 function saveUserPreferences() {
@@ -295,10 +300,10 @@ function saveUserPreferences() {
         isPetCardMovable: isPetCardMovable.value,
         isTimeWidgetVisible: isTimeWidgetVisible.value,
         isTimeWidgetMovable: isTimeWidgetMovable.value,
-icpNumber: icpNumber.value,
-icpVisible: icpVisible.value,
-isAdminMode: isAdminMode.value,
-musicUrls: musicUrls.value,
+        icpNumber: icpNumber.value,
+        icpVisible: icpVisible.value,
+        isAdminMode: isAdminMode.value,
+        musicUrls: musicUrls.value,
     };
     localStorage.setItem(STORAGE_KEY_PREFERENCES, JSON.stringify(preferences));
 }
@@ -392,12 +397,6 @@ function deleteTool(id) {
     }
 }
 
-function openMusicConfigModal() {
-    if (musicConfigModalRef.value) {
-        musicConfigModalRef.value.show();
-    }
-}
-
 function startBackgroundRotation() {
     if (isBackgroundRotationEnabled.value) {
         backgroundInterval = setInterval(() => {
@@ -441,6 +440,12 @@ const toggleAdminMode = () => {
         } else {
             alert('密码错误！');
         }
+    }
+};
+
+const openMusicConfigModal = () => {
+    if (musicConfigModalRef.value) {
+        musicConfigModalRef.value.showModal();
     }
 };
 

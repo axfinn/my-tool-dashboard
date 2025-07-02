@@ -84,18 +84,7 @@ body {
     right: 10px;
     color: #dc3545;
 }
-.modal-content {
-    border-radius: 15px;
-    box-shadow: 0 10px 30px rgba(0,0,0,.1);
-}
-.modal-header {
-    border-bottom: none;
-    padding-bottom: 0;
-}
-.modal-footer {
-    border-top: none;
-    padding-top: 0;
-}
+
 .form-control:focus {
     box-shadow: 0 0 0 0.25rem rgba(0, 123, 255, 0.25);
     border-color: #80bdff;
@@ -229,4 +218,58 @@ body {
 
 .form-range::-ms-thumb {
     background-color: #007bff;
+}
+
+/* 确保Bootstrap模态框的正确z-index层级 */
+.modal {
+    z-index: 2000 !important;
+}
+
+.modal-backdrop {
+    z-index: 1900 !important;
+}
+
+/* 确保模态框不被其他固定元素遮挡 */
+.modal.show {
+    z-index: 2000 !important;
+}
+
+/* 修复可能的模态框显示问题 */
+.modal-dialog {
+    pointer-events: auto;
+}
+
+.modal-content {
+    pointer-events: auto;
+}
+
+/* 确保模态框内容不是灰色不可编辑状态 */
+.modal-body .form-control,
+.modal-body .btn,
+.modal-body .list-group-item {
+    pointer-events: auto;
+    opacity: 1;
+}
+
+/* 修复可能的overlay问题 */
+body.modal-open {
+    overflow: hidden;
+}
+
+body.modal-open .modal {
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+.github-link-container {
+    position: absolute;
+    top: 28px;
+    right: 320px; /* Adjusted to prevent overlap with expanded controls */
+    z-index: 1001;
+    display: flex;
+    align-items: center;
+}
+
+.github-link-container iframe {
+    margin-left: 10px;
 }
