@@ -61,6 +61,14 @@
             <input class="form-check-input" type="checkbox" id="timeWidgetMovableSwitch" v-model="isTimeWidgetMovable">
             <label class="form-check-label text-white" for="timeWidgetMovableSwitch">时间摆件可移动</label>
         </div>
+        <div class="mb-2">
+            <label for="icpNumberInput" class="form-label mb-0 me-2 text-white">备案号:</label>
+            <input type="text" class="form-control" id="icpNumberInput" v-model="icpNumber" placeholder="请输入备案号">
+        </div>
+        <div class="form-check form-switch form-check-lg mb-2">
+            <input class="form-check-input" type="checkbox" id="icpVisibleSwitch" v-model="icpVisible">
+            <label class="form-check-label text-white" for="icpVisibleSwitch">显示备案号</label>
+        </div>
     </div>
 </div>
         </div>
@@ -92,6 +100,11 @@
         <PendulumComponent :is-visible="isPendulumVisible" :is-movable="isPendulumMovable" />
         <TimeWidget :is-visible="isTimeWidgetVisible" :is-movable="isTimeWidgetMovable" />
     </div>
+    <footer class="footer mt-auto py-3 bg-dark">
+        <div class="container text-center">
+            <span v-if="icpVisible" class="text-muted">{{ icpNumber }}</span>
+        </div>
+    </footer>
 </template>
 
 <script setup>
@@ -135,6 +148,8 @@ const isPetCardVisible = ref(true);
 const isPetCardMovable = ref(true);
 const isTimeWidgetVisible = ref(true);
 const isTimeWidgetMovable = ref(true);
+const icpNumber = ref('');
+const icpVisible = ref(false);
 
 const controlsContent = ref(null);
 const isControlsExpanded = ref(false); // Default to collapsed
@@ -160,7 +175,7 @@ const handleMouseLeaveControls = () => {
 const controlsContentHeight = computed(() => {
     // A sufficiently large fixed value for max-height when expanded
     // This avoids layout thrashing from dynamic scrollHeight calculation during animation
-    return isControlsExpanded.value ? '450px' : '0px'; 
+    return isControlsExpanded.value ? '550px' : '0px'; 
 });
 
 const defaultData = [
@@ -243,6 +258,8 @@ function loadUserPreferences() {
     isPetCardMovable.value = preferences.isPetCardMovable !== undefined ? preferences.isPetCardMovable : true;
     isTimeWidgetVisible.value = preferences.isTimeWidgetVisible !== undefined ? preferences.isTimeWidgetVisible : true;
     isTimeWidgetMovable.value = preferences.isTimeWidgetMovable !== undefined ? preferences.isTimeWidgetMovable : true;
+icpNumber.value = preferences.icpNumber !== undefined ? preferences.icpNumber : '';
+icpVisible.value = preferences.icpVisible !== undefined ? preferences.icpVisible : false;
 }
 
 function saveUserPreferences() {
@@ -257,6 +274,8 @@ function saveUserPreferences() {
         isPetCardMovable: isPetCardMovable.value,
         isTimeWidgetVisible: isTimeWidgetVisible.value,
         isTimeWidgetMovable: isTimeWidgetMovable.value,
+icpNumber: icpNumber.value,
+icpVisible: icpVisible.value,
     };
     localStorage.setItem(STORAGE_KEY_PREFERENCES, JSON.stringify(preferences));
 }
@@ -393,7 +412,7 @@ onMounted(() => {
     console.log('isTimeWidgetMovable:', isTimeWidgetMovable.value);
 });
 
-watch([isBackgroundRotationEnabled, backgroundBlur, isPendulumVisible, isPendulumMovable, isMusicPlayerVisible, isMusicPlayerMovable, isPetCardVisible, isPetCardMovable, isTimeWidgetVisible, isTimeWidgetMovable], () => {
+watch([isBackgroundRotationEnabled, backgroundBlur, isPendulumVisible, isPendulumMovable, isMusicPlayerVisible, isMusicPlayerMovable, isPetCardVisible, isPetCardMovable, isTimeWidgetVisible, isTimeWidgetMovable, icpNumber, icpVisible], () => {
     saveUserPreferences();
 });
 </script>
