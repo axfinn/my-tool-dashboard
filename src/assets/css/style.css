@@ -273,3 +273,93 @@ body.modal-open .modal {
 .github-link-container iframe {
     margin-left: 10px;
 }
+
+@media (max-width: 768px) {
+    .github-link-container {
+        top: 10px;
+        right: 10px;
+        transform: scale(0.8);
+        transform-origin: top right;
+    }
+
+    .controls-container {
+        top: auto;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        max-width: 90%;
+        max-height: 48px; /* Collapsed height */
+        align-items: center;
+        flex-direction: row;
+        justify-content: center;
+    }
+
+    .controls-container.expanded {
+        max-height: 80vh; /* Allow more height for content */
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .toggle-controls-btn {
+        position: relative;
+        top: auto;
+        right: auto;
+        margin-left: 10px; /* Space from other controls */
+    }
+
+    .controls-container .form-check-label {
+        font-size: 0.85rem;
+    }
+
+    .music-player,
+    .pet-container,
+    .pendulum-component,
+    .time-widget {
+        /* Adjust positions for mobile if they are fixed */
+        bottom: 10px !important;
+        left: 10px !important;
+        right: 10px !important;
+        top: auto !important;
+        transform: none !important;
+    }
+
+    .music-player {
+        width: auto; /* Allow player to take available width */
+        justify-content: center;
+    }
+
+    .tool-card {
+        padding: 1rem;
+    }
+
+    .tool-card .card-title {
+        font-size: 1.1rem;
+    }
+
+    .tool-card .card-text {
+        font-size: 0.85rem;
+    }
+
+    .btn-action {
+        width: 28px;
+        height: 28px;
+        font-size: 0.9rem;
+    }
+
+    .btn-edit {
+        right: 40px;
+    }
+
+    .btn-delete {
+        right: 8px;
+    }
+
+    .modal-dialog {
+        margin: 0.5rem;
+        width: auto;
+    }
+
+    .modal-content {
+        border-radius: 8px;
+    }
+}
