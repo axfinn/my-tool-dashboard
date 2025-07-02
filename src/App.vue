@@ -122,9 +122,11 @@
     <footer class="footer mt-auto py-2 bg-transparent">
         <div class="container text-center">
             <span v-if="icpVisible" class="text-white"><a :href="'https://beian.miit.gov.cn/'" target="_blank" class="text-white text-decoration-none">{{ icpNumber }}</a></span>
+            <span class="text-white ms-3">版本: {{ appVersion }}</span>
             <button class="btn btn-link text-white-50 ms-3" @click="toggleAdminMode">
                 {{ isAdminMode ? '退出管理员模式' : '管理员登录' }}
             </button>
+            <VersionChecker :currentVersion="appVersion" />
         </div>
     </footer>
 </template>
@@ -138,12 +140,15 @@ import PetCard from './components/PetCard.vue';
 import PendulumComponent from './components/PendulumComponent.vue';
 import TimeWidget from './components/TimeWidget.vue';
 import MusicConfigModal from './components/MusicConfigModal.vue';
+import VersionChecker from './components/VersionChecker.vue'; // Import the new component
 
 const STORAGE_KEY_TOOLS = 'my-tools-dashboard-vue-tools';
 const STORAGE_KEY_PREFERENCES = 'my-tools-dashboard-vue-preferences';
 let toolModalRef = ref(null);
 let musicConfigModalRef = ref(null);
 let backgroundInterval = null;
+
+const appVersion = ref('0.1.1'); // 从 package.json 读取的版本号
 
 const categories = ref([]);
 const searchTerm = ref('');
@@ -202,9 +207,6 @@ const defaultData = [
     }
 ];
 
-
-
-
 const controlsContent = ref(null);
 
 const controlsContentHeight = computed(() => {
@@ -248,8 +250,6 @@ const controlsContentStyle = computed(() => {
         transition: 'max-height 0.4s cubic-bezier(0.25, 0.8, 0.25, 1)'
     };
 });
-
-
 
 // Methods
 function loadData() {
