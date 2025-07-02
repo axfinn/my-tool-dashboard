@@ -1,12 +1,20 @@
 <template>
-    <span class="text-white ms-3">
-        <span v-if="newVersionAvailable" class="badge bg-warning text-dark me-2">有新版本!</span>
-        <button v-if="newVersionAvailable" class="btn btn-sm btn-info" @click="goToReleasePage">
-            更新到 {{ latestVersion }}
-        </button>
-        <span v-else-if="!loading && !error" class="text-white-50">已是最新版本</span>
-        <span v-else-if="loading" class="text-white-50">检查更新中...</span>
-        <span v-else-if="error" class="text-danger">检查更新失败</span>
+    <span class="version-checker-container ms-3">
+        <span v-if="loading" class="text-white-50">
+            <i class="fas fa-spinner fa-spin me-1"></i>检查更新中...
+        </span>
+        <span v-else-if="error" class="text-muted">
+            <i class="fas fa-times-circle me-1"></i>检查更新失败
+        </span>
+        <span v-else-if="newVersionAvailable">
+            <span class="badge bg-warning text-dark me-2"><i class="fas fa-exclamation-triangle me-1"></i>有新版本!</span>
+            <button class="btn btn-sm btn-info" @click="goToReleasePage">
+                <i class="fas fa-download me-1"></i>更新到 {{ latestVersion }}
+            </button>
+        </span>
+        <span v-else class="text-white-50">
+            <i class="fas fa-check-circle me-1"></i>已是最新版本
+        </span>
     </span>
 </template>
 
@@ -75,5 +83,26 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* Add any specific styles for the version checker here */
+.version-checker-container {
+    display: inline-flex;
+    align-items: center;
+    font-size: 0.9rem;
+}
+
+.btn-info {
+    background-color: #17a2b8;
+    border-color: #17a2b8;
+    color: white;
+}
+
+.btn-info:hover {
+    background-color: #138496;
+    border-color: #117a8b;
+}
+
+.badge {
+    font-size: 0.8em;
+    padding: 0.4em 0.6em;
+    vertical-align: middle;
+}
 </style>
