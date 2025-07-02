@@ -148,7 +148,7 @@ let toolModalRef = ref(null);
 let musicConfigModalRef = ref(null);
 let backgroundInterval = null;
 
-const appVersion = ref('0.1.1'); // 从 package.json 读取的版本号
+const appVersion = ref('0.2.0'); // 从 package.json 读取的版本号
 
 const categories = ref([]);
 const searchTerm = ref('');
