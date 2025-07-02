@@ -1,6 +1,6 @@
 <template>
     <div v-if="props.isVisible" class="pendulum-container"
-        :class="{ 'movable': props.isMovable }"
+        :class="{ 'movable': props.isMovable, 'no-transition': isDragging }"
         :style="{ left: pendulumX + 'px', top: pendulumY + 'px' }"
         @mousedown="startDrag">
         <svg :width="width" :height="height">
@@ -100,6 +100,10 @@ const stopDrag = () => {
 .pendulum-container {
     position: fixed;
     z-index: 999;
+}
+
+.pendulum-container.no-transition {
+    transition: none !important;
 }
 
 .pendulum-container.movable {

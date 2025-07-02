@@ -1,5 +1,6 @@
 <template>
     <div v-if="isVisible" class="time-widget"
+        :class="{ 'no-transition': isDragging }"
         :style="{ transform: `translate(${timeX}px, ${timeY}px)`, cursor: isMovable ? 'grab' : 'default' }"
         @mousedown="startDrag">
         {{ currentTime }}
@@ -99,6 +100,10 @@ const stopDrag = () => {
     font-weight: bold;
     z-index: 1000;
     transition: transform 0.1s ease-out;
+}
+
+.time-widget.no-transition {
+    transition: none !important;
 }
 
 .time-widget:active {

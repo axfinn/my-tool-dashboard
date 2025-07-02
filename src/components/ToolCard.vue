@@ -7,8 +7,8 @@
                     <p class="card-text">{{ tool.description }}</p>
                 </div>
             </a>
-            <button class="btn-action btn-edit" @click.stop="$emit('edit', tool)">✏️</button>
-            <button class="btn-action btn-delete" @click.stop="$emit('delete', tool.id)">🗑️</button>
+            <button class="btn-action btn-edit" @click.stop="$emit('edit', tool)" aria-label="编辑工具">✏️</button>
+            <button class="btn-action btn-delete" @click.stop="$emit('delete', tool.id)" aria-label="删除工具">🗑️</button>
         </div>
     </div>
 </template>

@@ -28,10 +28,7 @@
                             <label for="tool-description" class="form-label">描述</label>
                             <textarea class="form-control" id="tool-description" v-model="localTool.description" rows="3" placeholder="工具的简短描述"></textarea>
                         </div>
-                        <div class="mb-3">
-                            <label for="admin-password" class="form-label">管理员密码</label>
-                            <input type="password" class="form-control" id="admin-password" v-model="adminPassword" required placeholder="请输入管理员密码">
-                        </div>
+                        
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" @click="emits('close')">关闭</button>
                             <button type="submit" class="btn btn-primary">保存</button>
@@ -56,16 +53,12 @@ const props = defineProps({
 const emits = defineEmits(['save', 'close']);
 
 const localTool = ref({});
-const adminPassword = ref('');
-const correctPassword = 'admin123'; // 示例密码，实际应用中应更安全地处理
 let modalInstance = null; // Internal modal instance
 
 onMounted(() => {
     const modalElement = document.getElementById('toolModal');
-    console.log('ToolModal: onMounted - modalElement found:', modalElement);
     if (modalElement) {
         modalInstance = new Modal(modalElement);
-        console.log('ToolModal: onMounted - modalInstance initialized:', modalInstance);
     }
 });
 
@@ -77,29 +70,20 @@ onUnmounted(() => {
 });
 
 watch(() => props.tool, (newVal) => {
-    console.log('ToolModal: props.tool changed to:', newVal);
     localTool.value = newVal ? { ...newVal } : { id: null, name: '', url: '', category: '', description: '' };
-    adminPassword.value = ''; // Reset password field on modal open
 }, { immediate: true });
 
 const submitForm = () => {
-    console.log('ToolModal: submitForm called. adminPassword:', adminPassword.value, 'localTool:', localTool.value);
-    if (adminPassword.value === correctPassword) {
-        emits('save', localTool.value);
-        emits('close'); // Emit close event on successful save
-    } else {
-        alert('管理员密码不正确！');
-    }
+    emits('save', localTool.value);
+    emits('close'); // Emit close event on successful save
 };
 
 // Expose show and hide methods to parent component
 const show = () => {
-    console.log('ToolModal: show() called. modalInstance:', modalInstance);
     if (modalInstance) modalInstance.show();
 };
 
 const hide = () => {
-    console.log('ToolModal: hide() called. modalInstance:', modalInstance);
     if (modalInstance) modalInstance.hide();
 };
 

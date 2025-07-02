@@ -1,6 +1,7 @@
 <template>
     <div class="pet-container" 
         v-if="isVisible"
+        :class="{ 'no-transition': isDragging }"
         :style="{ transform: `translate(${petX}px, ${petY}px)`, cursor: isMovable ? 'grab' : 'default' }"
         @mousedown="startDrag"
         @mouseover="handleMouseOver" @mouseleave="handleMouseLeave">
@@ -124,6 +125,10 @@ const handleMouseLeave = () => {
     z-index: 1000;
     cursor: pointer;
     transition: transform 0.2s ease-in-out;
+}
+
+.pet-container.no-transition {
+    transition: none !important;
 }
 .pet-container:hover {
     transform: scale(1.1);

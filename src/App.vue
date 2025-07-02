@@ -16,7 +16,7 @@
         </div>
 
         <div class="controls-container" :class="{ 'expanded': isControlsExpanded }" @mouseenter="handleMouseEnterControls" @mouseleave="handleMouseLeaveControls">
-            <button class="toggle-controls-btn">
+            <button class="toggle-controls-btn" @click="isControlsExpanded = !isControlsExpanded">
                 {{ isControlsExpanded ? '&#9660;' : '&#9658;' }} <!-- Down/Right arrow -->
             </button>
             <div ref="controlsContent" :style="controlsContentStyle">
@@ -61,14 +61,28 @@
             <input class="form-check-input" type="checkbox" id="timeWidgetMovableSwitch" v-model="isTimeWidgetMovable">
             <label class="form-check-label text-white" for="timeWidgetMovableSwitch">时间摆件可移动</label>
         </div>
-        <div class="mb-2">
+        <hr class="text-white-50 my-3" v-if="isAdminMode">
+        <h6 class="text-white mb-2" v-if="isAdminMode">备案信息配置</h6>
+        <div class="mb-2" v-if="isAdminMode">
             <label for="icpNumberInput" class="form-label mb-0 me-2 text-white">备案号:</label>
             <input type="text" class="form-control" id="icpNumberInput" v-model="icpNumber" placeholder="请输入备案号">
         </div>
-        <div class="form-check form-switch form-check-lg mb-2">
+        <div class="form-check form-switch form-check-lg mb-2" v-if="isAdminMode">
             <input class="form-check-input" type="checkbox" id="icpVisibleSwitch" v-model="icpVisible">
             <label class="form-check-label text-white" for="icpVisibleSwitch">显示备案号</label>
         </div>
+        <hr class="text-white-50 my-3" v-if="isAdminMode">
+        <h6 class="text-white mb-2" v-if="isAdminMode">背景音乐配置</h6>
+        <div class="mb-2" v-if="isAdminMode">
+            <button class="btn btn-secondary w-100" @click="openMusicConfigModal">配置背景音乐</button>
+        </div>
+
+        <MusicConfigModal
+            ref="musicConfigModalRef"
+            :musicUrls="musicUrls"
+            @save="(newUrls) => { musicUrls = newUrls; saveUserPreferences(); }"
+            @close="musicConfigModalRef.hide()"
+        />
     </div>
 </div>
         </div>
@@ -95,14 +109,17 @@
             @close="toolModalRef.hide()"
         />
 
-        <MusicPlayer :is-visible="isMusicPlayerVisible" :is-movable="isMusicPlayerMovable" />
+        <MusicPlayer :is-visible="isMusicPlayerVisible" :is-movable="isMusicPlayerMovable" :music-urls="musicUrls" />
         <PetCard :is-visible="isPetCardVisible" :is-movable="isPetCardMovable" />
         <PendulumComponent :is-visible="isPendulumVisible" :is-movable="isPendulumMovable" />
         <TimeWidget :is-visible="isTimeWidgetVisible" :is-movable="isTimeWidgetMovable" />
     </div>
-    <footer class="footer mt-auto py-3 bg-dark">
+    <footer class="footer mt-auto py-2 bg-transparent">
         <div class="container text-center">
-            <span v-if="icpVisible" class="text-muted">{{ icpNumber }}</span>
+            <span v-if="icpVisible" class="text-white"><a :href="'https://beian.miit.gov.cn/'" target="_blank" class="text-white text-decoration-none">{{ icpNumber }}</a></span>
+            <button class="btn btn-link text-white-50 ms-3" @click="toggleAdminMode">
+                {{ isAdminMode ? '退出管理员模式' : '管理员登录' }}
+            </button>
         </div>
     </footer>
 </template>
@@ -115,10 +132,12 @@ import MusicPlayer from './components/MusicPlayer.vue';
 import PetCard from './components/PetCard.vue';
 import PendulumComponent from './components/PendulumComponent.vue';
 import TimeWidget from './components/TimeWidget.vue';
+import MusicConfigModal from './components/MusicConfigModal.vue';
 
 const STORAGE_KEY_TOOLS = 'my-tools-dashboard-vue-tools';
 const STORAGE_KEY_PREFERENCES = 'my-tools-dashboard-vue-preferences';
 let toolModalRef = ref(null);
+let musicConfigModalRef = ref(null); // New ref for music config modal
 let backgroundInterval = null;
 
 const categories = ref([]);
@@ -149,51 +168,45 @@ const isPetCardMovable = ref(true);
 const isTimeWidgetVisible = ref(true);
 const isTimeWidgetMovable = ref(true);
 const icpNumber = ref('');
-const icpVisible = ref(false);
+const icpVisible = ref(true);
+const isControlsExpanded = ref(false);
+const isAdminMode = ref(false); // New ref for admin mode
+const ADMIN_PASSWORD = 'admin'; // Hardcoded admin password - FOR DEMO ONLY, NOT SECURE
+
+const musicUrls = ref([
+    'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
+    'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3',
+    'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3'
+]);
+
+const defaultData = [
+    {
+        name: '常用工具',
+        tools: [
+            { id: '1', name: 'Google', url: 'https://www.google.com', description: '全球最大的搜索引擎' },
+            { id: '2', name: 'GitHub', url: 'https://github.com', description: '代码托管平台' },
+            { id: '3', name: 'Stack Overflow', url: 'https://stackoverflow.com', description: '程序员问答社区' }
+        ]
+    },
+    {
+        name: '开发工具',
+        tools: [
+            { id: '4', name: 'Vue.js', url: 'https://vuejs.org/', description: '渐进式JavaScript框架' },
+            { id: '5', name: 'React', url: 'https://react.dev/', description: '用于构建用户界面的JavaScript库' }
+        ]
+    }
+];
+
+
+
 
 const controlsContent = ref(null);
-const isControlsExpanded = ref(false); // Default to collapsed
-let debounceTimeout = null;
-
-const handleMouseEnterControls = () => {
-    if (debounceTimeout) {
-        clearTimeout(debounceTimeout);
-        debounceTimeout = null;
-    }
-    isControlsExpanded.value = true;
-};
-
-const handleMouseLeaveControls = () => {
-    if (debounceTimeout) {
-        clearTimeout(debounceTimeout);
-    }
-    debounceTimeout = setTimeout(() => {
-        isControlsExpanded.value = false;
-    }, 300); // Debounce for 300ms
-};
 
 const controlsContentHeight = computed(() => {
     // A sufficiently large fixed value for max-height when expanded
     // This avoids layout thrashing from dynamic scrollHeight calculation during animation
-    return isControlsExpanded.value ? '550px' : '0px'; 
+    return isControlsExpanded.value ? '650px' : '0px'; 
 });
-
-const defaultData = [
-    {
-        name: "常用工具",
-        tools: [
-            { id: "default-1", name: "在线翻译", url: "https://translate.google.com/", description: "谷歌翻译，支持多种语言。" },
-            { id: "default-2", name: "时间戳转换", url: "https://www.tool.io/timestamp/", description: "Unix 时间戳和标准日期的相互转换。" }
-        ]
-    },
-    {
-        name: "开发工具",
-        tools: [
-            { id: "default-3", name: "JSON 格式化", url: "https://jsonformatter.curiousconcept.com/", description: "在线验证、格式化和美化 JSON 数据。" },
-            { id: "default-4", name: "正则表达式测试", url: "https://regex101.com/", description: "在线测试和调试正则表达式。" }
-        ]
-    }
-];
 
 // Computed Properties
 const filteredCategories = computed(() => {
@@ -231,6 +244,8 @@ const controlsContentStyle = computed(() => {
     };
 });
 
+
+
 // Methods
 function loadData() {
     const data = localStorage.getItem(STORAGE_KEY_TOOLS);
@@ -259,7 +274,13 @@ function loadUserPreferences() {
     isTimeWidgetVisible.value = preferences.isTimeWidgetVisible !== undefined ? preferences.isTimeWidgetVisible : true;
     isTimeWidgetMovable.value = preferences.isTimeWidgetMovable !== undefined ? preferences.isTimeWidgetMovable : true;
 icpNumber.value = preferences.icpNumber !== undefined ? preferences.icpNumber : '';
-icpVisible.value = preferences.icpVisible !== undefined ? preferences.icpVisible : false;
+icpVisible.value = preferences.icpVisible !== undefined ? preferences.icpVisible : true;
+isAdminMode.value = preferences.isAdminMode !== undefined ? preferences.isAdminMode : false;
+musicUrls.value = preferences.musicUrls !== undefined ? preferences.musicUrls : [
+    'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
+    'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3',
+    'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3'
+];
 }
 
 function saveUserPreferences() {
@@ -276,6 +297,8 @@ function saveUserPreferences() {
         isTimeWidgetMovable: isTimeWidgetMovable.value,
 icpNumber: icpNumber.value,
 icpVisible: icpVisible.value,
+isAdminMode: isAdminMode.value,
+musicUrls: musicUrls.value,
     };
     localStorage.setItem(STORAGE_KEY_PREFERENCES, JSON.stringify(preferences));
 }
@@ -295,12 +318,8 @@ function findToolById(id) {
 }
 
 function openToolModal(tool = null, categoryName = '') {
-    console.log('App.vue: openToolModal called with tool:', tool, 'categoryName:', categoryName);
     if (toolModalRef.value) {
         toolModalRef.value.show();
-        console.log('App.vue: toolModalRef.value.show() called.');
-    } else {
-        console.error('App.vue: toolModalRef is not initialized!');
     }
     if (tool) {
         isEditMode.value = true;
@@ -324,10 +343,8 @@ function openToolModal(tool = null, categoryName = '') {
 }
 
 function saveTool(toolData) {
-    console.log('App.vue: saveTool called with toolData:', toolData);
     if (toolData.id) { // Editing existing tool
         const { tool: oldTool, category: oldCategory } = findToolById(toolData.id);
-        console.log('App.vue: Editing existing tool. oldTool:', oldTool, 'oldCategory:', oldCategory);
         if (oldTool) {
             oldTool.name = toolData.name;
             oldTool.url = toolData.url;
@@ -349,7 +366,6 @@ function saveTool(toolData) {
             }
         }
     } else { // Adding new tool
-        console.log('App.vue: Adding new tool.');
         const newTool = { id: generateId(), ...toolData };
         let category = categories.value.find(c => c.name === toolData.category);
         if (category) {
@@ -361,7 +377,6 @@ function saveTool(toolData) {
     saveData();
     if (toolModalRef.value) {
         toolModalRef.value.hide();
-        console.log('App.vue: toolModalRef.value.hide() called.');
     } else {
         console.error('App.vue: toolModalRef is not initialized!');
     }
@@ -374,6 +389,12 @@ function deleteTool(id) {
         });
         categories.value = categories.value.filter(category => category.tools.length > 0);
         saveData();
+    }
+}
+
+function openMusicConfigModal() {
+    if (musicConfigModalRef.value) {
+        musicConfigModalRef.value.show();
     }
 }
 
@@ -400,122 +421,39 @@ function toggleBackgroundRotation() {
     }
 }
 
+const handleMouseEnterControls = () => {
+    isControlsExpanded.value = true;
+};
+
+const handleMouseLeaveControls = () => {
+    isControlsExpanded.value = false;
+};
+
+const toggleAdminMode = () => {
+    if (isAdminMode.value) {
+        isAdminMode.value = false;
+        alert('已退出管理员模式。');
+    } else {
+        const password = prompt('请输入管理员密码：');
+        if (password === ADMIN_PASSWORD) {
+            isAdminMode.value = true;
+            alert('已进入管理员模式。');
+        } else {
+            alert('密码错误！');
+        }
+    }
+};
+
 // Lifecycle Hook
 onMounted(() => {
     loadData();
     loadUserPreferences();
     startBackgroundRotation(); // Start rotation by default
-
-    console.log('isMusicPlayerMovable:', isMusicPlayerMovable.value);
-    console.log('isPetCardMovable:', isPetCardMovable.value);
-    console.log('isPendulumMovable:', isPendulumMovable.value);
-    console.log('isTimeWidgetMovable:', isTimeWidgetMovable.value);
 });
 
-watch([isBackgroundRotationEnabled, backgroundBlur, isPendulumVisible, isPendulumMovable, isMusicPlayerVisible, isMusicPlayerMovable, isPetCardVisible, isPetCardMovable, isTimeWidgetVisible, isTimeWidgetMovable, icpNumber, icpVisible], () => {
+watch([isBackgroundRotationEnabled, backgroundBlur, isPendulumVisible, isPendulumMovable, isMusicPlayerVisible, isMusicPlayerMovable, isPetCardVisible, isPetCardMovable, isTimeWidgetVisible, isTimeWidgetMovable, icpNumber, icpVisible, isAdminMode, musicUrls], () => {
     saveUserPreferences();
 });
 </script>
 
-<style>
-body {
-    margin: 0;
-    overflow-x: hidden; /* Prevent horizontal scrollbar */
-}
 
-#app {
-    position: relative;
-    min-height: 100vh;
-}
-
-.background-container {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    transition: background-image 1s ease-in-out;
-    z-index: -1; /* Send to back */
-}
-
-.controls-container {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    background: rgba(0, 0, 0, 0.6);
-    border-radius: 12px;
-    z-index: 1000;
-    transition: max-width 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), max-height 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), padding 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    max-width: 48px; /* Collapsed width */
-    max-height: 48px; /* Collapsed height */
-    padding: 8px;
-}
-
-.controls-container.expanded {
-    max-width: 280px; /* Expanded width */
-    max-height: 250px; /* Adjusted max-height for content */
-    padding: 15px;
-}
-
-.controls-container .form-check-label {
-    color: white;
-    font-size: 0.95rem;
-}
-
-.toggle-controls-btn {
-    background: none;
-    border: none;
-    color: white;
-    font-size: 1.4rem;
-    cursor: pointer;
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    z-index: 1001;
-    transition: transform 0.3s ease;
-}
-
-.controls-container.expanded .toggle-controls-btn {
-    transform: rotate(180deg);
-}
-
-/* Custom switch styling */
-.form-check-lg .form-check-input {
-    width: 2.5em;
-    height: 1.3em;
-    margin-top: 0.15em;
-    background-color: #6c757d;
-    border-color: #6c757d;
-    transition: background-color 0.3s ease, border-color 0.3s ease; /* Smooth transition for color */
-}
-
-.form-check-lg .form-check-input:checked {
-    background-color: #28a745;
-    border-color: #28a745;
-}
-
-.form-check-lg .form-check-input:focus {
-    box-shadow: 0 0 0 0.25rem rgba(40, 167, 69, 0.25);
-}
-
-.form-range::-webkit-slider-thumb {
-    background-color: #007bff;
-}
-
-.form-range::-moz-range-thumb {
-    background-color: #007bff;
-}
-
-.form-range::-ms-thumb {
-    background-color: #007bff;
-}
-
-/* App-level styles or overrides */
-</style>
