@@ -4,7 +4,10 @@
         :class="{ 'no-transition': isDragging }"
         :style="{ transform: `translate(${petX}px, ${petY}px)`, cursor: isMovable ? 'grab' : 'default' }"
         @mousedown="startDrag"
-        @mouseover="handleMouseOver" @mouseleave="handleMouseLeave">
+        @touchstart.prevent="startDrag"
+        @mouseover="handleInteraction" 
+        @mouseleave="handleMouseLeave"
+        @click="handleInteraction">
         <img src="../assets/pet.svg" alt="可爱的小宠物" :class="{ 'wagging': isWagging }">
         <div v-if="showMessage" class="pet-message">{{ currentMessage }}</div>
     </div>
@@ -54,8 +57,10 @@ const throttledDrag = (e) => {
     }
     animationFrameId = requestAnimationFrame(() => {
         if (!isDragging.value) return;
-        const dx = e.clientX - startMouseX;
-        const dy = e.clientY - startMouseY;
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        const dx = clientX - startMouseX;
+        const dy = clientY - startMouseY;
         petX.value = startPetX + dx;
         petY.value = startPetY + dy;
     });
@@ -69,11 +74,15 @@ onMounted(() => {
     }
     document.addEventListener('mousemove', throttledDrag);
     document.addEventListener('mouseup', stopDrag);
+    document.addEventListener('touchmove', throttledDrag);
+    document.addEventListener('touchend', stopDrag);
 });
 
 onUnmounted(() => {
     document.removeEventListener('mousemove', throttledDrag);
     document.removeEventListener('mouseup', stopDrag);
+    document.removeEventListener('touchmove', throttledDrag);
+    document.removeEventListener('touchend', stopDrag);
     if (animationFrameId) {
         cancelAnimationFrame(animationFrameId);
     }
@@ -82,11 +91,12 @@ onUnmounted(() => {
 const startDrag = (e) => {
     if (!props.isMovable) return;
     isDragging.value = true;
-    startMouseX = e.clientX;
-    startMouseY = e.clientY;
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    startMouseX = clientX;
+    startMouseY = clientY;
     startPetX = petX.value;
     startPetY = petY.value;
-    e.preventDefault(); // Prevent default drag behavior
 };
 
 const stopDrag = () => {
@@ -94,7 +104,7 @@ const stopDrag = () => {
     localStorage.setItem(STORAGE_KEY_PET_CARD_POSITION, JSON.stringify({ x: petX.value, y: petY.value }));
 };
 
-const handleMouseOver = () => {
+const handleInteraction = () => {
     isWagging.value = true;
     if (!showMessage.value) { // Only show message if not already showing
         const randomIndex = Math.floor(Math.random() * messages.length);

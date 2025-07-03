@@ -4,14 +4,13 @@
         :class="{ 'no-transition': isDragging }"
         :style="{ transform: `translate(${playerX}px, ${playerY}px)`, cursor: isMovable ? 'grab' : 'default' }"
         @mousedown="startDrag"
-        @mouseenter="showVolume = true"
-        @mouseleave="showVolume = false">
+        @touchstart.prevent="startDrag">
         <audio id="background-music" loop></audio>
         <button class="play-pause-btn" @click="toggleMusic" :aria-label="isPlaying ? '暂停音乐' : '播放音乐'">
             {{ isPlaying ? '&#10074;&#10074;' : '&#9658;' }} <!-- Play/Pause icons -->
         </button>
         <button class="next-btn" @click="playNextMusic" aria-label="下一首">&#9654;&#9654;</button>
-        <input type="range" min="0" max="1" step="0.01" v-model="volume" @input="setVolume" v-if="showVolume">
+        <input type="range" min="0" max="1" step="0.01" v-model="volume" @input="setVolume">
     </div>
 </template>
 
@@ -39,8 +38,6 @@ let startMouseY = 0;
 let startPlayerX = 0;
 let startPlayerY = 0;
 
-const showVolume = ref(false);
-
 let animationFrameId = null;
 
 const playCurrentMusic = () => {
@@ -67,8 +64,10 @@ const throttledDrag = (e) => {
     }
     animationFrameId = requestAnimationFrame(() => {
         if (!isDragging.value) return;
-        const dx = e.clientX - startMouseX;
-        const dy = e.clientY - startMouseY;
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        const dx = clientX - startMouseX;
+        const dy = clientY - startMouseY;
         playerX.value = startPlayerX + dx;
         playerY.value = startPlayerY + dy;
     });
@@ -88,17 +87,19 @@ onMounted(() => {
     }
 
     // If there are music URLs, start playing the first one
-    if (props.musicUrls.length > 0) {
-        playCurrentMusic();
-    }
+    // Removed automatic playback due to browser restrictions
 
     document.addEventListener('mousemove', throttledDrag);
     document.addEventListener('mouseup', stopDrag);
+    document.addEventListener('touchmove', throttledDrag);
+    document.addEventListener('touchend', stopDrag);
 });
 
 onUnmounted(() => {
     document.removeEventListener('mousemove', throttledDrag);
     document.removeEventListener('mouseup', stopDrag);
+    document.removeEventListener('touchmove', throttledDrag);
+    document.removeEventListener('touchend', stopDrag);
     if (animationFrameId) {
         cancelAnimationFrame(animationFrameId);
     }
@@ -128,11 +129,12 @@ const setVolume = () => {
 const startDrag = (e) => {
     if (!props.isMovable) return;
     isDragging.value = true;
-    startMouseX = e.clientX;
-    startMouseY = e.clientY;
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    startMouseX = clientX;
+    startMouseY = clientY;
     startPlayerX = playerX.value;
     startPlayerY = playerY.value;
-    e.preventDefault(); // Prevent default drag behavior
 };
 
 const stopDrag = () => {
@@ -153,49 +155,16 @@ const stopDrag = () => {
     box-shadow: 0 5px 15px rgba(0,0,0,0.1);
     display: flex;
     align-items: center;
-    padding: 3px; /* Minimal padding */
-    gap: 0; /* No gap by default */
+    padding: 5px 10px; /* Slightly more padding on hover */
+    gap: 5px; /* Add gap on hover */
     z-index: 1000;
     cursor: grab; /* Indicate draggable */
     transition: all 0.3s ease; /* Smooth transition for all properties */
     overflow: hidden; /* Hide overflow content */
-    width: 36px; /* Default width for just the button */
+    width: 180px; /* Expanded width to show slider and next button */
 }
 
-.music-player.no-transition {
-    transition: none !important;
-}
-
-.music-player:active {
-    cursor: grabbing;
-}
-
-.music-player:hover {
-    width: 100px; /* Expanded width to show slider */
-    padding: 3px 8px; /* Slightly more padding on hover */
-    gap: 3px; /* Add gap on hover */
-}
-
-.music-player .play-pause-btn {
-    width: 30px; /* Fixed width for circular button */
-    height: 30px; /* Fixed height for circular button */
-    border-radius: 50%; /* Make it circular */
-    background-color: #007bff; /* Blue background */
-    color: white;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    border: none;
-    cursor: pointer;
-    flex-shrink: 0;
-    font-size: 0.8rem; /* Adjust font size for icons */
-    line-height: 1; /* Ensure icon is centered vertically */
-}
-
-.music-player .play-pause-btn:hover {
-    background-color: #0056b3; /* Darker blue on hover */
-}
-
+.music-player .play-pause-btn,
 .music-player .next-btn {
     width: 30px; /* Fixed width for circular button */
     height: 30px; /* Fixed height for circular button */
@@ -212,12 +181,13 @@ const stopDrag = () => {
     line-height: 1; /* Ensure icon is centered vertically */
 }
 
+.music-player .play-pause-btn:hover,
 .music-player .next-btn:hover {
     background-color: #0056b3; /* Darker blue on hover */
 }
 
 .music-player input[type="range"] {
-    width: 60px; /* Slider width when visible */
+    width: 70px; /* Slider width when visible */
     flex-grow: 1; /* Allow slider to take available space */
     margin-left: 5px; /* Space between button and slider */
 }

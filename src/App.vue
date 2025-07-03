@@ -429,6 +429,8 @@ const handleMouseLeaveControls = () => {
     isControlsExpanded.value = false;
 };
 
+
+
 const toggleAdminMode = () => {
     if (isAdminMode.value) {
         isAdminMode.value = false;

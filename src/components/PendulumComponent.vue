@@ -2,7 +2,8 @@
     <div v-if="props.isVisible" class="pendulum-container"
         :class="{ 'movable': props.isMovable, 'no-transition': isDragging }"
         :style="{ left: pendulumX + 'px', top: pendulumY + 'px' }"
-        @mousedown="startDrag">
+        @mousedown="startDrag"
+        @touchstart.prevent="startDrag">
         <svg :width="width" :height="height">
             <!-- Rod -->
             <line :x1="width / 2" y1="0" :x2="width / 2 + xOffset" :y2="height - ballRadius" stroke="grey" stroke-width="2" />
@@ -55,8 +56,10 @@ const throttledDrag = (e) => {
     }
     dragAnimationFrameId = requestAnimationFrame(() => {
         if (!isDragging.value) return;
-        pendulumX.value = e.clientX - offsetX;
-        pendulumY.value = e.clientY - offsetY;
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        pendulumX.value = clientX - offsetX;
+        pendulumY.value = clientY - offsetY;
     });
 };
 
@@ -69,6 +72,8 @@ onMounted(() => {
     }
     document.addEventListener('mousemove', throttledDrag);
     document.addEventListener('mouseup', stopDrag);
+    document.addEventListener('touchmove', throttledDrag);
+    document.addEventListener('touchend', stopDrag);
 });
 
 onUnmounted(() => {
@@ -77,6 +82,8 @@ onUnmounted(() => {
     }
     document.removeEventListener('mousemove', throttledDrag);
     document.removeEventListener('mouseup', stopDrag);
+    document.removeEventListener('touchmove', throttledDrag);
+    document.removeEventListener('touchend', stopDrag);
     if (dragAnimationFrameId) {
         cancelAnimationFrame(dragAnimationFrameId);
     }
@@ -85,9 +92,10 @@ onUnmounted(() => {
 const startDrag = (e) => {
     if (!props.isMovable) return;
     isDragging.value = true;
-    offsetX = e.clientX - pendulumX.value;
-    offsetY = e.clientY - pendulumY.value;
-    e.preventDefault(); // Prevent default drag behavior
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    offsetX = clientX - pendulumX.value;
+    offsetY = clientY - pendulumY.value;
 };
 
 const stopDrag = () => {

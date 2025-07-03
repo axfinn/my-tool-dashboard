@@ -18,15 +18,13 @@ RUN npm run build
 # Stage 2: Serve the application with Nginx
 FROM nginx:stable-alpine as production-stage
 
-# Copy custom Nginx configuration (optional, but good practice for SPAs)
-# If you have a custom nginx.conf for your SPA (e.g., for history mode routing),
-# uncomment the line below and place your nginx.conf in the same directory as the Dockerfile.
-# COPY nginx.conf /etc/nginx/conf.d/default.conf
+# Copy custom Nginx configuration for SPA
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# Remove default Nginx configuration
-RUN rm /etc/nginx/conf.d/default.conf
+# Remove default Nginx configuration (if exists)
+RUN rm -f /etc/nginx/conf.d/default.conf.bak
 
-# Create a simple Nginx configuration for serving static files
+# Copy built application files
 COPY --from=build-stage /app/dist /usr/share/nginx/html
 
 # Expose port 80

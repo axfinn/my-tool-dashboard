@@ -2,7 +2,8 @@
     <div v-if="isVisible" class="time-widget"
         :class="{ 'no-transition': isDragging }"
         :style="{ transform: `translate(${timeX}px, ${timeY}px)`, cursor: isMovable ? 'grab' : 'default' }"
-        @mousedown="startDrag">
+        @mousedown="startDrag"
+        @touchstart.prevent="startDrag">
         {{ currentTime }}
     </div>
 </template>
@@ -41,8 +42,10 @@ const throttledDrag = (e) => {
     }
     animationFrameId = requestAnimationFrame(() => {
         if (!isDragging.value) return;
-        const dx = e.clientX - startMouseX;
-        const dy = e.clientY - startMouseY;
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        const dx = clientX - startMouseX;
+        const dy = clientY - startMouseY;
         timeX.value = startTimeX + dx;
         timeY.value = startTimeY + dy;
     });
@@ -60,12 +63,16 @@ onMounted(() => {
 
     document.addEventListener('mousemove', throttledDrag);
     document.addEventListener('mouseup', stopDrag);
+    document.addEventListener('touchmove', throttledDrag);
+    document.addEventListener('touchend', stopDrag);
 });
 
 onUnmounted(() => {
     clearInterval(intervalId);
     document.removeEventListener('mousemove', throttledDrag);
     document.removeEventListener('mouseup', stopDrag);
+    document.removeEventListener('touchmove', throttledDrag);
+    document.removeEventListener('touchend', stopDrag);
     if (animationFrameId) {
         cancelAnimationFrame(animationFrameId);
     }
@@ -74,11 +81,12 @@ onUnmounted(() => {
 const startDrag = (e) => {
     if (!props.isMovable) return;
     isDragging.value = true;
-    startMouseX = e.clientX;
-    startMouseY = e.clientY;
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    startMouseX = clientX;
+    startMouseY = clientY;
     startTimeX = timeX.value;
     startTimeY = timeY.value;
-    e.preventDefault(); // Prevent default drag behavior
 };
 
 const stopDrag = () => {
