@@ -1,5 +1,17 @@
 # Changelog
 
+## 2025年7月7日
+
+### Added
+- 备案信息配置：支持通过本地配置文件 `src/config.js` 配置备案号，该文件不会被提交到远程仓库，方便个人部署。
+- 移动端长按拖拽：所有可移动小组件（音乐播放器、宠物、小摆锤、时间摆件）在移动端支持长按拖拽移动。
+
+### Changed
+- 备案号配置从用户偏好设置中移除，改为从本地配置文件读取。
+
+### Fixed
+- 修复了 `MusicPlayer.vue`、`PetCard.vue`、`PendulumComponent.vue` 和 `TimeWidget.vue` 中 `ref` 变量使用不当导致的构建错误。
+
 ## 2025年7月2日
 
 ### Added

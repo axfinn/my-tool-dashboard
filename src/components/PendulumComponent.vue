@@ -38,6 +38,9 @@ const pendulumY = ref(200); // Initial Y position
 const isDragging = ref(false);
 let offsetX = 0;
 let offsetY = 0;
+const longPressTimer = ref(null);
+const initialTouchX = ref(0);
+const initialTouchY = ref(0);
 
 const animatePendulum = (timestamp) => {
     if (!startTime) startTime = timestamp;
@@ -55,7 +58,16 @@ const throttledDrag = (e) => {
         cancelAnimationFrame(dragAnimationFrameId);
     }
     dragAnimationFrameId = requestAnimationFrame(() => {
-        if (!isDragging.value) return;
+        if (!isDragging.value) {
+            if (e.type === 'touchmove') {
+                const clientX = e.touches[0].clientX;
+                const clientY = e.touches[0].clientY;
+                if (Math.abs(clientX - initialTouchX.value) > 10 || Math.abs(clientY - initialTouchY.value) > 10) {
+                    clearTimeout(longPressTimer.value);
+                }
+            }
+            return;
+        }
         const clientX = e.touches ? e.touches[0].clientX : e.clientX;
         const clientY = e.touches ? e.touches[0].clientY : e.clientY;
         pendulumX.value = clientX - offsetX;
@@ -91,16 +103,32 @@ onUnmounted(() => {
 
 const startDrag = (e) => {
     if (!props.isMovable) return;
-    isDragging.value = true;
+
     const clientX = e.touches ? e.touches[0].clientX : e.clientX;
     const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-    offsetX = clientX - pendulumX.value;
-    offsetY = clientY - pendulumY.value;
+
+    if (e.type === 'touchstart') {
+        initialTouchX.value = clientX;
+        initialTouchY.value = clientY;
+
+        longPressTimer.value = setTimeout(() => {
+            isDragging.value = true;
+            offsetX = clientX - pendulumX.value;
+            offsetY = clientY - pendulumY.value;
+        }, 500); // 500ms for long press
+    } else { // mousedown
+        isDragging.value = true;
+        offsetX = clientX - pendulumX.value;
+        offsetY = clientY - pendulumY.value;
+    }
 };
 
 const stopDrag = () => {
-    isDragging.value = false;
-    localStorage.setItem(STORAGE_KEY_PENDULUM_POSITION, JSON.stringify({ x: pendulumX.value, y: pendulumY.value }));
+    clearTimeout(longPressTimer.value);
+    if (isDragging.value) {
+        isDragging.value = false;
+        localStorage.setItem(STORAGE_KEY_PENDULUM_POSITION, JSON.stringify({ x: pendulumX.value, y: pendulumY.value }));
+    }
 };
 </script>
 

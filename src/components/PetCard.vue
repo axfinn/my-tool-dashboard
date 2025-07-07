@@ -30,6 +30,9 @@ let startMouseX = 0;
 let startMouseY = 0;
 let startPetX = 0;
 let startPetY = 0;
+const longPressTimer = ref(null);
+const initialTouchX = ref(0);
+const initialTouchY = ref(0);
 
 let animationFrameId = null;
 
@@ -56,7 +59,16 @@ const throttledDrag = (e) => {
         cancelAnimationFrame(animationFrameId);
     }
     animationFrameId = requestAnimationFrame(() => {
-        if (!isDragging.value) return;
+        if (!isDragging.value) {
+            if (e.type === 'touchmove') {
+                const clientX = e.touches[0].clientX;
+                const clientY = e.touches[0].clientY;
+                if (Math.abs(clientX - initialTouchX.value) > 10 || Math.abs(clientY - initialTouchY.value) > 10) {
+                    clearTimeout(longPressTimer.value);
+                }
+            }
+            return;
+        }
         const clientX = e.touches ? e.touches[0].clientX : e.clientX;
         const clientY = e.touches ? e.touches[0].clientY : e.clientY;
         const dx = clientX - startMouseX;
@@ -90,18 +102,36 @@ onUnmounted(() => {
 
 const startDrag = (e) => {
     if (!props.isMovable) return;
-    isDragging.value = true;
+
     const clientX = e.touches ? e.touches[0].clientX : e.clientX;
     const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-    startMouseX = clientX;
-    startMouseY = clientY;
-    startPetX = petX.value;
-    startPetY = petY.value;
+
+    if (e.type === 'touchstart') {
+        initialTouchX.value = clientX;
+        initialTouchY.value = clientY;
+
+        longPressTimer.value = setTimeout(() => {
+            isDragging.value = true;
+            startMouseX = clientX;
+            startMouseY = clientY;
+            startPetX = petX.value;
+            startPetY = petY.value;
+        }, 500); // 500ms for long press
+    } else { // mousedown
+        isDragging.value = true;
+        startMouseX = clientX;
+        startMouseY = clientY;
+        startPetX = petX.value;
+        startPetY = petY.value;
+    }
 };
 
 const stopDrag = () => {
-    isDragging.value = false;
-    localStorage.setItem(STORAGE_KEY_PET_CARD_POSITION, JSON.stringify({ x: petX.value, y: petY.value }));
+    clearTimeout(longPressTimer.value);
+    if (isDragging.value) {
+        isDragging.value = false;
+        localStorage.setItem(STORAGE_KEY_PET_CARD_POSITION, JSON.stringify({ x: petX.value, y: petY.value }));
+    }
 };
 
 const handleInteraction = () => {

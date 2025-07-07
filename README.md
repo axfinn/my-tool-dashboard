@@ -21,8 +21,8 @@
   - **物理小摆锤**：一个动态的小摆锤组件，可控制显示和拖动。
   - **时间摆件**：新增的时间显示组件，可控制显示和拖动。
 
-- **自动化部署**：
-  - 提供 Dockerfile，支持通过 Docker 快速构建和部署应用。
+- **备案信息配置**：
+  - 支持通过本地配置文件 `src/config.js` 配置备案号，该文件不会被提交到远程仓库，方便个人部署。
 
 ## 技术栈
 
@@ -45,7 +45,13 @@
     ```bash
     npm install
     ```
-3.  **运行开发服务器**：
+3.  **配置备案信息 (可选)**：
+    如果你需要显示备案号，请复制 `src/config.example.js` 为 `src/config.js`，并修改 `src/config.js` 中的 `icpNumber` 和 `icpVisible`。
+    ```bash
+    cp src/config.example.js src/config.js
+    # 然后编辑 src/config.js 文件
+    ```
+4.  **运行开发服务器**：
     ```bash
     npm run serve
     ```
@@ -72,7 +78,7 @@
   - 调整背景模糊度。
   - 控制音乐播放器、宠物、小摆锤和时间摆件的显示/隐藏。
   - 控制这些组件是否可以拖动。
-- **拖动组件**：当组件设置为可移动时，你可以点击并拖动它们到页面上的任意位置。组件的位置信息将自动保存。
+- **拖动组件**：当组件设置为可移动时，你可以点击并拖动它们到页面上的任意位置。在移动端，支持**长按**组件进行拖拽。
 
 ## 项目结构
 
@@ -87,6 +93,8 @@ my-tool-dashboard/
 │   │   ├── PendulumComponent.vue
 │   │   ├── TimeWidget.vue
 │   │   └── ...
+│   ├── config.js       # 本地备案信息配置文件 (不会提交到 Git)
+│   ├── config.example.js # 备案信息配置文件示例
 │   ├── App.vue         # 主应用组件
 │   └── main.js         # 应用入口文件
 ├── Dockerfile          # Docker 部署文件
