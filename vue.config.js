@@ -25,5 +25,14 @@ module.exports = defineConfig({
         '@': require('path').resolve(__dirname, 'src')
       }
     }
+  },
+
+  chainWebpack: config => {
+    config
+      .plugin('define')
+      .tap(args => {
+        args[0]['process.env'].VUE_APP_VERSION = JSON.stringify(require('./package.json').version)
+        return args
+      })
   }
 })
