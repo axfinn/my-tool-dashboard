@@ -67,13 +67,13 @@
             <input class="form-check-input" type="checkbox" id="timeWidgetMovableSwitch" v-model="isTimeWidgetMovable">
             <label class="form-check-label text-white" for="timeWidgetMovableSwitch">时间摆件可移动</label>
         </div>
-        <hr class="text-white-50 my-3" v-if="isAdminMode">
-        <h6 class="text-white mb-2" v-if="isAdminMode">备案信息配置</h6>
-        <div class="mb-2" v-if="isAdminMode">
+        <hr class="text-white-50 my-3">
+        <h6 class="text-white mb-2">备案信息配置</h6>
+        <div class="mb-2">
             <label for="icpNumberInput" class="form-label mb-0 me-2 text-white">备案号:</label>
             <input type="text" class="form-control" id="icpNumberInput" v-model="icpNumber" placeholder="请输入备案号">
         </div>
-        <div class="form-check form-switch form-check-lg mb-2" v-if="isAdminMode">
+        <div class="form-check form-switch form-check-lg mb-2">
             <input class="form-check-input" type="checkbox" id="icpVisibleSwitch" v-model="icpVisible">
             <label class="form-check-label text-white" for="icpVisibleSwitch">显示备案号</label>
         </div>
@@ -281,7 +281,6 @@ function loadUserPreferences() {
     isTimeWidgetMovable.value = preferences.isTimeWidgetMovable !== undefined ? preferences.isTimeWidgetMovable : true;
     icpNumber.value = preferences.icpNumber !== undefined ? preferences.icpNumber : '京ICP备xxxxxxxx号';
     icpVisible.value = preferences.icpVisible !== undefined ? preferences.icpVisible : true;
-    isAdminMode.value = preferences.isAdminMode !== undefined ? preferences.isAdminMode : false;
     musicUrls.value = preferences.musicUrls !== undefined ? preferences.musicUrls : [
         'https://www.bensound.com/bensound-music/bensound-ukulele.mp3',
         'https://www.bensound.com/bensound-music/bensound-sunny.mp3',
@@ -303,7 +302,6 @@ function saveUserPreferences() {
         isTimeWidgetMovable: isTimeWidgetMovable.value,
         icpNumber: icpNumber.value,
         icpVisible: icpVisible.value,
-        isAdminMode: isAdminMode.value,
         musicUrls: musicUrls.value,
     };
     localStorage.setItem(STORAGE_KEY_PREFERENCES, JSON.stringify(preferences));
@@ -459,7 +457,7 @@ onMounted(() => {
     startBackgroundRotation(); // Start rotation by default
 });
 
-watch([isBackgroundRotationEnabled, backgroundBlur, isPendulumVisible, isPendulumMovable, isMusicPlayerVisible, isMusicPlayerMovable, isPetCardVisible, isPetCardMovable, isTimeWidgetVisible, isTimeWidgetMovable, icpNumber, icpVisible, isAdminMode, musicUrls], () => {
+watch([isBackgroundRotationEnabled, backgroundBlur, isPendulumVisible, isPendulumMovable, isMusicPlayerVisible, isMusicPlayerMovable, isPetCardVisible, isPetCardMovable, isTimeWidgetVisible, isTimeWidgetMovable, icpNumber, icpVisible, musicUrls], () => {
     saveUserPreferences();
 });
 </script>
