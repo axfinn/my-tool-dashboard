@@ -121,7 +121,7 @@
     </div>
     <footer class="footer mt-auto py-2 bg-transparent">
         <div class="container text-center">
-            <span v-if="icpVisible" class="text-white"><a :href="'https://beian.miit.gov.cn/'" target="_blank" class="text-white text-decoration-none">{{ icpNumber }}</a></span>
+            <span v-if="icpVisible" class="text-white"><a :href="'https://beian.mps.gov.cn/#/query/webSearch'" target="_blank" class="text-white text-decoration-none">{{ icpNumber }}</a></span>
             <span class="text-white ms-3"><a href="https://axfinn.github.io/" target="_blank" class="text-white text-decoration-none">我的博客</a></span>
             <span class="text-white ms-3">版本: {{ appVersion }}</span>
             <button class="btn btn-link text-white-50 ms-3" @click="toggleAdminMode">
