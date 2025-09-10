@@ -3,6 +3,7 @@ node_modules
 /dist
 local_deploy.sh
 dist.zip
+/release/
 
 # local env files
 .env.local
